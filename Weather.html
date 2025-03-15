@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impossible XSS Challenge</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            text-align: center;
+            padding: 50px;
+        }
+        h2 {
+            font-size: 28px;
+        }
+        input {
+            width: 300px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #ff4081;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover {
+            background-color: #d81b60;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .fake-hint {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #ffa726;
+            animation: blink 1s infinite alternate;
+        }
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.3; }
+        }
+        .error-message {
+            color: red;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        // Anti-inspect element & debugger detection
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if (
+                e.keyCode === 123 || 
+                (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'K'].includes(String.fromCharCode(e.keyCode))) || 
+                (e.ctrlKey && e.keyCode === 'U'.charCodeAt(0))
+            ) {
+                return false;
+            }
+        };
+
+        function detectDevTools() {
+            let before = new Date().getTime();
+            debugger;
+            let after = new Date().getTime();
+            if (after - before > 100) {
+                alert("Developer Tools Detected! Cheating is not allowed.");
+                window.location.reload();
+            }
+        }
+        setInterval(detectDevTools, 1000);
+
+        // Secret flag logic (Hidden in runtime, not in source code)
+        function secret() {
+            let a = String.fromCharCode(82, 65);
+            let b = String.fromCharCode(52, 116);
+            let c = String.fromCharCode(49, 51);
+            let d = String.fromCharCode(100, 72, 65);
+            return a + b + c + d;
+        }
+
+        function obfCheck(str) {
+            return str.includes(secret());
+        }
+
+        function verify() {
+            var userInput = document.getElementById("searchInput").value;
+            
+            setTimeout(function() {
+                document.getElementById("result").innerHTML = "You searched: " + userInput;
+            }, 100);
+
+            // Check if input contains a possible XSS attempt
+            if (userInput.includes("javascript:alert(1)")) {
+                document.body.innerHTML += `<p style="color: yellow; font-size: 20px;">🚩 Flag: flag{RA4t13dHA}</p>`;
+            }
+
+            document.addEventListener("keydown", function() {
+                if (obfCheck(userInput)) {
+                    let x = "a" + "ler" + "t";
+                    let y = "(secret())";
+                    eval(x + y);  // Highly obfuscated alert execution
+                }
+            });
+        }
+
+        function fakeConsoleWarning() {
+            console.log("Warning: This challenge is protected! Any attempt to inspect elements will be detected.");
+        }
+        fakeConsoleWarning();
+    </script>
+</head>
+<body>
+    <h2>Can You Find the Hidden Message?</h2>
+    <input type="text" id="searchInput" placeholder="Enter something">
+    <button onclick="verify()">Search</button>
+    <p id="result"></p>
+    
+    <!-- Fake hints to confuse the user -->
+    <p class="fake-hint">Hint: Try pressing CTRL+U </p>
+    <p class="error-message" id="errorDisplay">Error: Unexpected syntax at line 42</p>
+
+    <!-- Hidden flag -->
+    <div style="display: none;">RA4t13dHA</div>
+</body>
+</html>
